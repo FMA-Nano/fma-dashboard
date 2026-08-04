@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd /home/pi/fma-dashboard || exit 1
+
+/home/pi/fma-dashboard/.venv/bin/python app.py
+
+# tesr

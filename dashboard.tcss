@@ -1,0 +1,243 @@
+Screen {
+    background: #14181f;
+    color: #d8dee9;
+}
+
+#app-header {
+    height: auto;
+    padding: 0 2;
+    background: #10131a;
+    border-bottom: heavy #2b3542;
+    content-align: left middle;
+}
+
+#body {
+    height: 1fr;
+}
+
+#sidebar {
+    width: 24;
+    background: #191d26;
+    border-right: heavy #2b3542;
+}
+
+#sidebar > ListItem {
+    padding: 0 2;
+    color: #b7c0cc;
+}
+
+#sidebar > ListItem.--highlight {
+    background: #24313f;
+    color: #ffffff;
+}
+
+#sidebar:focus > ListItem.--highlight {
+    background: #2f6fa3;
+    color: #ffffff;
+}
+
+#content {
+    width: 1fr;
+    padding: 1 3;
+    background: #14181f;
+}
+
+.page-title {
+    color: #4fa8e0;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.section-title {
+    color: #9aa5b1;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+.card-row {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.status-card {
+    width: 1fr;
+    height: auto;
+    background: #1c222c;
+    border: round #2b3542;
+    padding: 1 2;
+    margin-right: 1;
+}
+
+.status-card-body {
+    color: #d8dee9;
+}
+
+.info-block {
+    background: #1c222c;
+    border: round #2b3542;
+    padding: 1 2;
+    margin-bottom: 1;
+    color: #d8dee9;
+}
+
+.info-row {
+    color: #d8dee9;
+    padding: 0 1;
+}
+
+.event-log {
+    background: #1c222c;
+    border: round #2b3542;
+    padding: 1 2;
+    height: 10;
+}
+
+.log-window {
+    background: #10131a;
+    border: round #2b3542;
+    padding: 1 2;
+    height: 8;
+    margin-bottom: 1;
+}
+
+.setting-row {
+    background: #1c222c;
+    border: round #2b3542;
+    padding: 1 2;
+    margin-bottom: 1;
+    height: auto;
+}
+
+.setting-title {
+    color: #4fa8e0;
+}
+
+.setting-status {
+    color: #5fd68a;
+    margin-bottom: 1;
+}
+
+.setting-actions Button {
+    margin-right: 1;
+    min-width: 12;
+    background: #2f6fa3;
+    color: #ffffff;
+}
+
+.setting-inline-row {
+    height: auto;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+.setting-inline-row Label {
+    width: 20;
+    color: #b7c0cc;
+}
+
+.settings-control {
+    width: 30;
+}
+
+.setting-button {
+
+    width: 10;
+    height: 3;
+
+    margin-left: 3;
+    margin-right: 3;
+
+    background: transparent;
+
+    border: solid white;
+
+    color: white;
+}
+
+/* The saved value */
+.active-value {
+
+    background: blue;
+
+    color: white;
+
+    border: solid blue;
+
+}
+
+/* Where the cursor is */
+
+.cursor-value {
+
+    border: solid green;
+}
+
+.setting-button.active-button {
+    background: green;
+    color: white;
+}
+
+.refresh-buttons {
+    height: 5;
+    width: 100%;
+    align: center middle;
+}
+
+.refresh-button {
+    width: 10;
+    height: 3;
+
+    margin: 0 3;
+
+    background: transparent;
+    border: solid white;
+}
+
+
+/* Saved value */
+.refresh-button.active {
+    background: green;
+    color: white;
+    border: solid green;
+}
+
+/* Keyboard cursor */
+.refresh-button.selected {
+    border: double green;
+}
+
+.service-row {
+    background: #1c222c;
+    border: round #2b3542;
+    padding: 1 2;
+    margin-bottom: 1;
+    height: auto;
+    align: left middle;
+}
+
+.service-name {
+    color: #d8dee9;
+}
+
+.service-status {
+    color: #5fd68a;
+}
+
+.service-pid {
+    color: #9aa5b1;
+}
+
+Button {
+    background: #2f6fa3;
+    color: #ffffff;
+    border: none;
+}
+
+Button:hover {
+    background: #3a86c4;
+}
+
+Footer {
+    background: #10131a;
+    color: #b7c0cc;
+}

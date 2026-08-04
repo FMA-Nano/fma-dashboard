@@ -1,0 +1,5 @@
+rich==14.3.4
+markdown-it-py==3.0.0
+typing-extensions==4.13.2
+psutil==7.0.0
+pyserial==3.5
