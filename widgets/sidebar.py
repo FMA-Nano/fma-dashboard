@@ -35,6 +35,7 @@ class Sidebar(ListView):
 
         ("dashboard", "Dashboard"),
         ("pumps", "Pumps & Tanks"),
+        ("pumps_config", "Pumps Config"),
         ("network", "Network"),
         ("security", "Security"),
         ("cronjobs", "Cron Jobs"),

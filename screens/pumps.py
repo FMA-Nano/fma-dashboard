@@ -42,7 +42,8 @@ class PumpsPage(VerticalScroll):
 
 
     def on_mount(self):
-        refresh_manager.register( self.refresh_data )
+        self.set_interval(5, self.refresh_data)
+        
 
     def refresh_data(self):
         
@@ -64,16 +65,29 @@ class PumpsPage(VerticalScroll):
 
     def get_tank_rows(self, tank):
 
-        return [
-            ( "Enabled", "[#5FD68A]Yes[/#5FD68A]" if tank.enabled else "[#E05C5]No[/#E05C5]" ),
-            ( "Capacity", f"{tank.capacity} L" ),
-            ( "Volume        ", f"[#5FD68A]{tank.volume:.1f} L[/#5FD68A]" ),
-            ( "Ullage", f"{tank.ullage:.1f} L" ),
-            ( "Level         ", f"[#d1ce00]{tank.level} mm[/#d1ce00]" ),
-            ( "Temperature", f"{tank.temperature:.1f} °C" ),
-            ( "Water        ", f"[#00fff7]{tank.water:.1f} mm[/#00fff7]" ),
-            ( "Probe", str(tank.probe_id) ),
-        ]
+        if tank.enabled:
+            return [
+                ( "Enabled       ", "[#5FD68A]Yes[/#5FD68A]" ),
+                ( "Capacity      ", f"{tank.capacity} L" ),
+                ( "Volume        ", f"[#5FD68A]{tank.volume:.1f} L[/#5FD68A]" ),
+                ( "Ullage        ", f"{tank.ullage:.1f} L" ),
+                ( "Level         ", f"[#d1ce00]{tank.level} mm[/#d1ce00]" ),
+                ( "Temperature   ", f"[#E05C5C]{tank.temperature:.1f} °C[/#E05C5C]" ),
+                ( "Water         ", f"[#00fff7]{tank.water:.1f} mm[/#00fff7]" ),
+                ( "Probe         ", str(tank.probe_id) ),
+            ]
+
+        else:
+            return [
+                ( "Enabled       ", "No" ),
+                ( "Capacity      ", f"{tank.capacity} L" ),
+                ( "Volume        ", f"{tank.volume:.1f} L" ),
+                ( "Ullage        ", f"{tank.ullage:.1f} L" ),
+                ( "Level         ", f"{tank.level} mm" ),
+                ( "Temperature   ", f"{tank.temperature:.1f} °C" ),
+                ( "Water         ", f"{tank.water:.1f} mm" ),
+                ( "Probe         ", str(tank.probe_id) ),
+            ]
 
 
     def get_pump_rows(self, pump):
