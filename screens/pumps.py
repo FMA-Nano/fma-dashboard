@@ -67,11 +67,11 @@ class PumpsPage(VerticalScroll):
         return [
             ( "Enabled", "[#5FD68A]Yes[/#5FD68A]" if tank.enabled else "[#E05C5]No[/#E05C5]" ),
             ( "Capacity", f"{tank.capacity} L" ),
-            ( "[#5FD68A]Volume[/#5FD68A]        ", f"[#5FD68A]{tank.volume:.1f} L[/#5FD68A]" ),
+            ( "Volume        ", f"[#5FD68A]{tank.volume:.1f} L[/#5FD68A]" ),
             ( "Ullage", f"{tank.ullage:.1f} L" ),
-            ( "[#d1ce00]Level[#d1ce00]         ", f"[#d1ce00]{tank.level} mm[#d1ce00]" ),
+            ( "Level         ", f"[#d1ce00]{tank.level} mm[/#d1ce00]" ),
             ( "Temperature", f"{tank.temperature:.1f} °C" ),
-            ( "[#00fff7]Water[/#00fff7]        ", f"[#00fff7]{tank.water:.1f} mm[/#00fff7]" ),
+            ( "Water        ", f"[#00fff7]{tank.water:.1f} mm[/#00fff7]" ),
             ( "Probe", str(tank.probe_id) ),
         ]
 
