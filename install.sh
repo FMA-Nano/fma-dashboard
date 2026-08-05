@@ -40,7 +40,24 @@ sudo apt install -y \
 echo ""
 echo "[2/6] Checking repository..."
 
-if [ ! -d "$PROJECT_DIR/.git" ]; then
+if [ -d "$PROJECT_DIR/.git" ]; then
+    echo "Repository already exists."
+    echo "Skipping clone."
+elif [ -d "$PROJECT_DIR" ] && [ "$(ls -A "$PROJECT_DIR")" ]; then
+    echo ""
+    echo "ERROR:"
+    echo "------------------------------------------------------"
+    echo "Folder already exists and is not empty:"
+    echo "$PROJECT_DIR"
+    echo ""
+    echo "Please remove the folder or empty it before installing."
+    echo ""
+    echo "Example:"
+    echo "  sudo rm -rf $PROJECT_DIR"
+    echo "------------------------------------------------------"
+    echo ""
+    exit 1
+else
     echo "Checking GitHub access..."
     if ! git ls-remote "$REPO" >/dev/null 2>&1; then
         echo ""
@@ -52,8 +69,6 @@ if [ ! -d "$PROJECT_DIR/.git" ]; then
     fi
     echo "Cloning FMA Dashboard..."
     git clone "$REPO" "$PROJECT_DIR"
-else
-    echo "Repository already exists."
 fi
 
 cd "$PROJECT_DIR"
