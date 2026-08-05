@@ -47,7 +47,7 @@ class DashboardPage(VerticalScroll):
 
         system = system_service.get_system_status()
         
-        yield Static("[bold]Dashboard[/bold]", classes="page-title")
+        yield Static("[bold]Dashboard Test[/bold]", classes="page-title")
         
         self.info_card = StatusCard("Nano Information", [
             ("Hostname", system["hostname"]),
