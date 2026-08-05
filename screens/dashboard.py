@@ -110,11 +110,11 @@ class DashboardPage(VerticalScroll):
                 ])
             yield self.wifi_card
             
-            self.wifi_card = StatusCard("Hotspot Settings",[
+            self.hotspotcard = StatusCard("Hotspot Settings",[
                 ("Status", hotspot["status"]),
                 ("Name", hotspot["name"]),
                 ])
-            yield self.wifi_card
+            yield self.hotspotcard
 
         
     def on_mount(self) -> None:
@@ -123,7 +123,7 @@ class DashboardPage(VerticalScroll):
 
 
     def refresh_data(self):
-
+        
         # ------------------------
         # ---Refresh Cronjobs ----
         # ------------------------ 
@@ -192,16 +192,15 @@ class DashboardPage(VerticalScroll):
         wifi = wifi_service.get_wifi_status()
         status = "Connected" if wifi["connected"] else "Disconnected"
         hotspot = wifi_service.get_hotspot_status()
-        
-        self.wifi_card = StatusCard("WiFi Settings",[
+                        
+        self.wifi_card.update_rows([
             ("Module", "Enabled" if wifi["enabled"] else "Disabled"),
             ("Status", status),
             ("SSID", wifi["ssid"]),
-            ("Signal", wifi["signal"]),
-            ("Frequency", wifi["frequency"]),
-            ("Bitrate", wifi["bitrate"]),
+            ])
+
+        
+        self.hotspotcard.update_rows([
             ("Status", hotspot["status"]),
             ("Name", hotspot["name"]),
             ])
-        yield self.wifi_card
-        
