@@ -181,10 +181,41 @@ class DashboardPage(VerticalScroll):
         
     def on_mount(self) -> None:
 
-        self.set_interval(5, self.refresh_data)
+        # Do not block startup
+        self.set_interval(5, self.refresh_fast_data)
 
+        self.set_interval(20, self.refresh_medium_data)
 
-    def refresh_data(self):
+        # Load dashboard after UI is visible
+        self.set_timer(1, self.load_dashboard_data)
+            
+            
+    def refresh_medium_data(self):
+        
+        # ------------------------
+        # -- Refresh Fuctions ----
+        # ------------------------        
+        self.network_card.update_rows([
+            ("IP Address", self.net["ip_address"]),
+            ("Internet", self.net["internet"]),
+            ("WireGuard", self.wireguard),
+            ("Firewall", self.firewall),
+            ("SSH", self.ssh),
+            ("Data Monitor", self.data_monitor),
+        ])
+
+        # ------------------------
+        # -- Refresh Services ----
+        # ------------------------        
+        self.service_card.update_rows([
+            ("WireGuard", self.wireguard_ser),
+            ("Firewall", self.firewall_ser),
+            ("SSH", self.ssh_ser),
+            ("Data Monitor", self.data_monitor_ser),
+        ])
+        
+        
+    def refresh_fast_data(self):
         
         self.load_dashboard_data()
             
@@ -211,28 +242,6 @@ class DashboardPage(VerticalScroll):
         ])
 
         # ------------------------
-        # -- Refresh Fuctions ----
-        # ------------------------        
-        self.network_card.update_rows([
-            ("IP Address", self.net["ip_address"]),
-            ("Internet", self.net["internet"]),
-            ("WireGuard", self.wireguard),
-            ("Firewall", self.firewall),
-            ("SSH", self.ssh),
-            ("Data Monitor", self.data_monitor),
-        ])
-
-        # ------------------------
-        # -- Refresh Services ----
-        # ------------------------        
-        self.service_card.update_rows([
-            ("WireGuard", self.wireguard_ser),
-            ("Firewall", self.firewall_ser),
-            ("SSH", self.ssh_ser),
-            ("Data Monitor", self.data_monitor_ser),
-        ])
-        
-        # ------------------------
         # ------- Wifi -----------
         # ------------------------ 
         self.wifi_card.update_rows([
@@ -240,7 +249,6 @@ class DashboardPage(VerticalScroll):
             ("Status", self.status),
             ("SSID", self.wifi["ssid"]),
             ])
-
         
         self.hotspotcard.update_rows([
             ("Status", self.hotspot["status"]),
