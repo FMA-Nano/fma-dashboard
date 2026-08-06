@@ -6,7 +6,11 @@ from services import ssh
 
 class SecurityPage(VerticalScroll):
 
-
+    BINDINGS = [
+        ("up", "cursor_up", "ScrollUp"),
+        ("down", "cursor_down", "Scroll Down"),
+    ]
+    
     def compose(self):
 
         yield Static(

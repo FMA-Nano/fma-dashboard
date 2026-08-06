@@ -15,6 +15,11 @@ from services import wifi as wifi_service
 class DashboardPage(VerticalScroll):
     """Landing page: system health, network, communications, services, recent events."""
 
+    BINDINGS = [
+        ("up", "cursor_up", "Scroll Up"),
+        ("down", "cursor_down", "Scroll Down"),
+    ]
+
     def compose(self):
 
         system = system_service.get_system_status()

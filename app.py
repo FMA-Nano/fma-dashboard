@@ -28,15 +28,9 @@ class NanoDashboard(App):
     CSS_PATH = "dashboard.tcss"
 
     BINDINGS = [
-
-        ("up", "cursor_up", "Up"),
-        ("down", "cursor_down", "Down"),
-        ("enter", "select", "Open"),
-        ("escape", "focus_sidebar", "Back"),
-        # ("f1", "show_help", "Help"),
-        # ("f5", "refresh_page", "Refresh"),
         ("q", "quit", "Quit"),
-
+        ("escape", "focus_sidebar", "Back"),
+        ("enter", "select_cursor", "Open"),
     ]
 
 

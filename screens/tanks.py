@@ -1,103 +1,103 @@
-from textual.containers import VerticalScroll
+# from textual.containers import VerticalScroll
 
-from widgets.status_card import StatusCard
+# from widgets.status_card import StatusCard
 
-from services import tanks as tanks_service
-from services.refresh import refresh_manager
-
-
-class TanksPage(VerticalScroll):
-
-    def compose(self):
-
-        self.cards = {}
-
-        tanks = tanks_service.get_tanks()
-
-        for tank in tanks:
-
-            card = StatusCard(
-                f"Tank {tank.tank_number}",
-                self.get_rows(tank)
-            )
-
-            self.cards[tank.id] = card
-
-            yield card
+# from services import tanks as tanks_service
+# from services.refresh import refresh_manager
 
 
-    def on_mount(self):
+# class TanksPage(VerticalScroll):
 
-        refresh_manager.register(
-            self.refresh_data
-        )
+#     def compose(self):
+
+#         self.cards = {}
+
+#         tanks = tanks_service.get_tanks()
+
+#         for tank in tanks:
+
+#             card = StatusCard(
+#                 f"Tank {tank.tank_number}",
+#                 self.get_rows(tank)
+#             )
+
+#             self.cards[tank.id] = card
+
+#             yield card
 
 
-    def refresh_data(self):
+#     def on_mount(self):
 
-        tanks = tanks_service.get_tanks()
-
-        for tank in tanks:
-
-            if tank.id in self.cards:
-
-                self.cards[tank.id].update_rows(
-                    self.get_rows(tank)
-                )
+#         refresh_manager.register(
+#             self.refresh_data
+#         )
 
 
-    def get_rows(self, tank):
+#     def refresh_data(self):
 
-        return [
+#         tanks = tanks_service.get_tanks()
 
-            (
-                "Enabled",
-                "Yes" if tank.enabled else "No"
-            ),
+#         for tank in tanks:
 
-            (
-                "Capacity",
-                f"{tank.capacity} L"
-            ),
+#             if tank.id in self.cards:
 
-            (
-                "Volume",
-                f"{tank.volume:.1f} L"
-            ),
+#                 self.cards[tank.id].update_rows(
+#                     self.get_rows(tank)
+#                 )
 
-            (
-                "Ullage",
-                f"{tank.ullage:.1f} L"
-            ),
 
-            (
-                "Level",
-                f"{tank.level} mm"
-            ),
+#     def get_rows(self, tank):
 
-            (
-                "Temperature",
-                f"{tank.temperature:.1f} °C"
-            ),
+#         return [
 
-            (
-                "Water",
-                f"{tank.water:.1f} mm"
-            ),
+#             (
+#                 "Enabled",
+#                 "Yes" if tank.enabled else "No"
+#             ),
 
-            (
-                "Grade ID",
-                str(tank.grade_id)
-            ),
+#             (
+#                 "Capacity",
+#                 f"{tank.capacity} L"
+#             ),
 
-            (
-                "Probe ID",
-                str(tank.probe_id)
-            ),
+#             (
+#                 "Volume",
+#                 f"{tank.volume:.1f} L"
+#             ),
 
-            (
-                "Downloaded",
-                "Yes" if tank.downloaded else "No"
-            ),
+#             (
+#                 "Ullage",
+#                 f"{tank.ullage:.1f} L"
+#             ),
 
-        ]
+#             (
+#                 "Level",
+#                 f"{tank.level} mm"
+#             ),
+
+#             (
+#                 "Temperature",
+#                 f"{tank.temperature:.1f} °C"
+#             ),
+
+#             (
+#                 "Water",
+#                 f"{tank.water:.1f} mm"
+#             ),
+
+#             (
+#                 "Grade ID",
+#                 str(tank.grade_id)
+#             ),
+
+#             (
+#                 "Probe ID",
+#                 str(tank.probe_id)
+#             ),
+
+#             (
+#                 "Downloaded",
+#                 "Yes" if tank.downloaded else "No"
+#             ),
+
+#         ]

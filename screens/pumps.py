@@ -15,7 +15,11 @@ from services.refresh import refresh_manager
 
 class PumpsPage(VerticalScroll):
 
-
+    BINDINGS = [
+        ("up", "cursor_up", "Scroll Up"),
+        ("down", "cursor_down", "Scroll Down"),
+    ]
+    
     def compose(self):
 
         self.tank_cards = {}

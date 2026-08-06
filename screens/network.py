@@ -9,6 +9,12 @@ REFRESH_SECONDS = 5
 
 
 class NetworkPage(VerticalScroll):
+    
+    BINDINGS = [
+        ("up", "cursor_up", "Scroll Up"),
+        ("down", "cursor_down", "Scroll Down"),
+    ]
+        
     def compose(self):
         data = network_service.get_network_details()
         wifi = wifi_service.get_wifi_status()

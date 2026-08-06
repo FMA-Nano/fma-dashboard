@@ -15,7 +15,6 @@ class Sidebar(ListView):
     """Fixed left-hand navigation menu."""
 
     BINDINGS = [
-
         ("up", "cursor_up", "Up"),
         ("down", "cursor_down", "Down"),
         ("enter", "select_cursor", "Open"),
