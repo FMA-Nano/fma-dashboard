@@ -16,40 +16,80 @@ class PumpsConfigPage(ScrollableContainer):
         ("tab", "next_field", "Next Field"),
         ("shift tab", "previous_field", "Previous Field"),
     ]
-    
-
-
+        
     def action_apply(self):
 
-        widget = self.app.focused
+        self.apply_changes()
 
-        if widget is None:
-            return
+    def apply_changes(self):
 
-        # If focus is on Hardware ID or Pulse Rate
-        if isinstance(widget, Input):
+        pumps = pumps_service.get_pumps_config()
 
-            if widget.id.startswith("hardware_"):
-                pump_id = widget.id.replace("hardware_", "")
-            elif widget.id.startswith("pulse_"):
-                pump_id = widget.id.replace("pulse_", "")
-            else:
+        changed = 0
+
+        for pump in pumps:
+
+            pump_id = pump["id"]
+            hardware_id = self.query_one( f"#hardware_{pump_id}", Input ).value
+            pulse_rate = self.query_one( f"#pulse_{pump_id}", Input ).value
+
+
+
+            # Validate Hardware ID
+            if not hardware_id.isdigit():
+
+                self.notify( f"Pump {pump_id}: Hardware ID must be a number", severity="error" )
+
                 return
 
-            button = self.query_one(
-                f"#apply_{pump_id}",
-                Button
-            )
-            button.press()
 
 
-        # If focus is already on Apply button
-        elif isinstance(widget, Button):
+            # Validate Pulse Rate
+            try:
 
-            if widget.id.startswith("apply_"):
-                widget.press()
-            
-            
+                pulse_rate = float(pulse_rate)
+
+            except ValueError:
+
+                self.notify( f"Pump {pump_id}: Pulse Rate must be a number", severity="error" )
+
+                return
+
+
+
+            # Check if changed
+
+            if (
+                int(hardware_id) != pump["HardwareId"]
+                or
+                pulse_rate != pump["PulsRate"]
+            ):
+
+                success = pumps_service.update_pump_config(
+                    pump_id,
+                    int(hardware_id),
+                    pulse_rate
+                )
+
+
+                if success:
+                    changed += 1
+
+                else:
+                    self.notify( f"Pump {pump_id} update failed", severity="error" )
+
+                    return
+
+
+
+        if changed:
+
+            self.notify( f"{changed} pump(s) updated. Waiting for sync...", severity="information" )
+
+        else:
+
+            self.notify( "No changes detected", severity="information" )
+                
     def compose(self):
         
         yield Static( "[bold]Pump Configuration[/bold]", classes="page-title" )
@@ -62,38 +102,8 @@ class PumpsConfigPage(ScrollableContainer):
                 yield PumpsConfig(pump)
 
 
-
     def on_button_pressed(self, event):
 
-        if not event.button.id.startswith("apply_"):
-            return
+        if event.button.id == "apply_all":
 
-        pump_id = event.button.id.replace( "apply_", "" )
-        hardware_id = self.query_one( f"#hardware_{pump_id}" ).value
-        pulse_rate = self.query_one( f"#pulse_{pump_id}" ).value
-
-        # Validate Hardware ID
-        if not hardware_id.isdigit():
-            self.notify( "Hardware ID must be a number", severity="error" )
-            return
-
-        # Validate Pulse Rate
-        try:
-            pulse_rate = float( pulse_rate )
-
-        except ValueError:
-            self.notify( "Pulse Rate must be a number", severity="error" )
-            return
-
-
-        success = pumps_service.update_pump_config(
-            int(pump_id),
-            int(hardware_id),
-            pulse_rate
-        )
-
-        if success:
-            self.notify( f"Pump {pump_id} updated. Waiting for sync...", severity="information"
-            )
-        else:
-            self.notify("Update failed", severity="error" )
+            self.apply_changes()

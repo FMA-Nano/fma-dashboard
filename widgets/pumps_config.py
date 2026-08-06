@@ -1,5 +1,5 @@
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Static, Input, Button
+from textual.widgets import Static, Input
 
 
 class PumpsConfig(Vertical):
@@ -48,11 +48,3 @@ class PumpsConfig(Vertical):
                 id=f"pulse_{self.pump['id']}",
                 classes="config-input"
             )
-
-
-        yield Button(
-            "APPLY",
-            id=f"apply_{self.pump['id']}",
-            variant="success",
-            classes="apply-button"
-        )

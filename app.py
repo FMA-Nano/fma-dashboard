@@ -20,6 +20,7 @@ from screens.about import AboutPage
 from screens.security import SecurityPage
 from screens.cronjobs import CronJobPage
 from screens.pumps_config import PumpsConfigPage
+from screens.tanks_config import TanksConfigPage
 
 class NanoDashboard(App):
     """Fuel Management Africa - Device Maintenance Console."""
@@ -52,6 +53,7 @@ class NanoDashboard(App):
                 yield NetworkPage(id="network")
                 yield PumpsPage(id="pumps")
                 yield PumpsConfigPage(id="pumps_config")
+                yield TanksConfigPage(id="tanks_config")
                 yield SecurityPage(id="security")
                 yield CronJobPage(id="cronjobs")
                 # yield LogsPage(id="logs")
