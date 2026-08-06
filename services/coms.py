@@ -3,6 +3,9 @@ import subprocess
 import serial
 
 
+BOARD_TYPE = None
+DEVICE_CACHE = None
+
 BOARD_MAPPING = {
 
     "NanoPC-T3": {
@@ -40,15 +43,6 @@ class ComDevice:
 class ComStatus:
     def __init__(self):
         self.devices = []
-
-
-def get_coms_details():
-
-    return {
-        "lcd": get_device_status("LCD"),
-        "fc": get_device_status("FC"),
-        "atg": get_device_status("ATG"),
-    }
 
 
 
@@ -239,35 +233,32 @@ def get_usb_port(devpath):
 
     return ""
 
-
-
 def get_board_type():
 
+    global BOARD_TYPE
+
+    # Already detected, return saved value
+    if BOARD_TYPE:
+        return BOARD_TYPE
+
     try:
-
         with open("/proc/device-tree/model", "r") as file:
-
             model = file.read().replace("\x00", "")
 
-
     except:
-
-        return "Unknown"
-
-
+        BOARD_TYPE = "Unknown"
+        return BOARD_TYPE
 
     if "NanoPC-T3" in model:
-        return "NanoPC-T3"
-
+        BOARD_TYPE = "NanoPC-T3"
     elif "NanoPC-T4" in model:
-        return "NanoPC-T4"
-
+        BOARD_TYPE = "NanoPC-T4"
     elif "NanoPC-T6" in model:
-        return "NanoPC-T6"
+        BOARD_TYPE = "NanoPC-T6"
+    else:
+        BOARD_TYPE = "Unknown"
 
-
-    return "Unknown"
-
+    return BOARD_TYPE
 
 
 def identify_device(port):
@@ -287,17 +278,12 @@ def identify_device(port):
 
 
 
-def get_device_status(name):
+def get_device_status(devices, name):
 
-    status = get_devices()
-
-
-    for device in status.devices:
+    for device in devices:
 
         if device.name == name:
-
             return "Connected"
-
 
     return "Not Found"
 

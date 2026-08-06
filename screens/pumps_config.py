@@ -17,6 +17,19 @@ class PumpsConfigPage(ScrollableContainer):
         ("shift tab", "previous_field", "Previous Field"),
     ]
         
+
+    def compose(self):
+        
+        yield Static( "[bold]Pump Configuration[/bold]", classes="page-title" )
+        
+        with Horizontal(classes="card-row"):
+
+            pumps = pumps_service.get_pumps_config()
+
+            for pump in pumps:
+                yield PumpsConfig(pump)
+                
+        
     def action_apply(self):
 
         self.apply_changes()
@@ -90,17 +103,6 @@ class PumpsConfigPage(ScrollableContainer):
 
             self.notify( "No changes detected", severity="information" )
                 
-    def compose(self):
-        
-        yield Static( "[bold]Pump Configuration[/bold]", classes="page-title" )
-        
-        with Horizontal(classes="card-row"):
-
-            pumps = pumps_service.get_pumps_config()
-
-            for pump in pumps:
-                yield PumpsConfig(pump)
-
 
     def on_button_pressed(self, event):
 
