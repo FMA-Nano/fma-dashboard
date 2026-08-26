@@ -147,7 +147,7 @@ class DashboardPage(VerticalScroll):
                 ("LCD", self.lcd),
                 ("Flow Controller", self.fc),
                 ("ATG", self.atg),
-                ("Total Devices", str(len(self.coms.devices))),
+                # ("Total Devices", str(len(self.coms.devices))),
             ])
             yield self.coms_card
 
@@ -226,7 +226,7 @@ class DashboardPage(VerticalScroll):
             ("LCD", self.lcd),
             ("Flow Controller", self.fc),
             ("ATG", self.atg),
-            ("Total Devices", str(len(self.coms.devices))),
+            # ("Total Devices", str(len(self.coms.devices))),
         ])
 
         # ------------------------

@@ -5,6 +5,7 @@ from textual.containers import Vertical
 
 
 STATUS_COLORS = {
+
     "ok": "#5FD68A",
     "healthy": "#5FD68A",
     "connected": "#5FD68A",
@@ -12,9 +13,14 @@ STATUS_COLORS = {
     "running": "#5FD68A",
     "warning": "#E0C341",
     "degraded": "#E0C341",
+    "starting": "#E0C341",
+    "stopping": "#E0C341",
     "error": "#E05C5C",
+    "failed": "#E05C5C",
     "disabled": "#E05C5C",
     "stopped": "#E05C5C",
+    "masked": "#E05C5C",
+    "not found": "#E05C5C",
     "unknown": "#9AA5B1",
 }
 

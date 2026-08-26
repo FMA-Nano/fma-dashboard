@@ -16,6 +16,19 @@ Screen {
 }
 
 
+
+
+#loading {
+
+    width: 100%;
+    height: 100%;
+
+    align: center middle;
+
+    background: #050505;
+
+}
+
 /* Pump Configuration */
 
 .pump-config-card {

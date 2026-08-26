@@ -160,7 +160,9 @@ def check_internet():
 
 
 def get_data_usage_monitor_status():
+
     try:
+
         result = subprocess.run(
             [
                 "systemctl",
@@ -174,16 +176,30 @@ def get_data_usage_monitor_status():
 
         status = result.stdout.strip()
 
-        status = result.stdout.strip()
-
         if status == "active":
             return "Enabled"
 
         elif status == "inactive":
             return "Disabled"
 
+        elif status == "failed":
+            return "Failed"
+
+        elif status == "activating":
+            return "Starting"
+
+        elif status == "deactivating":
+            return "Stopping"
+
+        elif status == "unknown":
+            return "Unknown"
+
         return "Unknown"
-    
+
+    except subprocess.TimeoutExpired:
+
+        return "Unknown"
+
     except Exception:
 
         return "Unknown"
@@ -209,6 +225,12 @@ def get_data_usage_monitor_service():
 
         elif status == "disabled":
             return "Disabled"
+
+        elif status == "masked":
+            return "Masked"
+
+        elif status == "not-found":
+            return "Not Found"
 
         return "Unknown"
 

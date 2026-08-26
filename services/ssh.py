@@ -25,6 +25,18 @@ def get_ssh_status():
         elif status == "inactive":
             return "Disabled"
 
+        elif status == "failed":
+            return "Failed"
+
+        elif status == "activating":
+            return "Starting"
+
+        elif status == "deactivating":
+            return "Stopping"
+
+        elif status == "unknown":
+            return "Unknown"
+
         return "Unknown"
     
     except Exception:

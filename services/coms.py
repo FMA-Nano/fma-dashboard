@@ -1,7 +1,7 @@
 import glob
 import subprocess
 import serial
-
+import os
 
 BOARD_TYPE = None
 DEVICE_CACHE = None
@@ -168,6 +168,25 @@ def run_command(command):
 
 def get_atg_status():
 
+    try:
+
+        result = subprocess.run(
+            [
+                "sudo",
+                "cat",
+                "/dev/ttyS4",
+            ],
+            capture_output=True,
+            timeout=3,
+        )
+
+        if result.stdout:
+            return "Connected"
+
+        return "Not Found"
+
+    except Exception:
+        return "Unknown"
 
     # try:
 
@@ -191,7 +210,7 @@ def get_atg_status():
 
     # except Exception:
 
-    return "Unknown"
+    # return "Unknown"
         
 
 def get_usb_port(devpath):
