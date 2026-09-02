@@ -13,6 +13,10 @@ class NetworkPage(VerticalScroll):
     BINDINGS = [
         ("up", "cursor_up", "Scroll Up"),
         ("down", "cursor_down", "Scroll Down"),
+        ("up", "scroll_up", "Scroll Up"),
+        ("down", "scroll_down", "Scroll Down"),
+        ("pageup", "page_up", "Page Up"),
+        ("pagedown", "page_down", "Page Down"),
     ]
         
     def compose(self):

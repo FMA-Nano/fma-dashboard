@@ -11,7 +11,7 @@ from services import firewall as firewall_service
 from services import wireguard as wireguard_service
 from services import ssh as ssh_service
 from services import wifi as wifi_service
-
+from services import router as router_service
 import time
 
 
@@ -28,6 +28,10 @@ class DashboardPage(VerticalScroll):
     BINDINGS = [
         ("up", "cursor_up", "Scroll Up"),
         ("down", "cursor_down", "Scroll Down"),
+        ("up", "scroll_up", "Scroll Up"),
+        ("down", "scroll_down", "Scroll Down"),
+        ("pageup", "page_up", "Page Up"),
+        ("pagedown", "page_down", "Page Down"),
     ]
 
     def __init__(self, **kwargs):
@@ -72,6 +76,9 @@ class DashboardPage(VerticalScroll):
         self.wifi_card = None
         self.hotspotcard = None
          
+         
+        # self.router = {}
+         
         self.load_dashboard_data()
         
                 
@@ -107,7 +114,10 @@ class DashboardPage(VerticalScroll):
         self.status = ( "Connected" if self.wifi["connected"] else "Disconnected" )
         self.hotspot = wifi_service.get_hotspot_status()
                 
-                
+        # ---- Router / Modem ----------
+        # self.router = router_service.get_router_modem_status()   
+        
+        
     def compose(self):
             
         yield Static("[bold]Dashboard Test[/bold]", classes="page-title")
@@ -117,6 +127,11 @@ class DashboardPage(VerticalScroll):
             ("Firmware", self.system["firmware"]),
         ])
         yield self.info_card
+        
+        
+
+        
+
         
 
         with Horizontal(classes="card-row"):
@@ -177,12 +192,30 @@ class DashboardPage(VerticalScroll):
                 ("Name", self.hotspot["name"]),
                 ])
             yield self.hotspotcard
+            
+                
+            # self.router_card = StatusCard("Router / Modem", [
+            #     ("SIM", self.router.get("SIM", "")),
+            #     ("Modem", self.router.get("Modem", "")),
+            #     ("Operator", self.router.get("Operator", "")),
+            #     ("Network", self.router.get("Network", "")),
+            #     ("Signal (CSQ)", self.router.get("CSQ", "")),
+            #     ("RSRP", self.router.get("RSRP", "")),
+            #     ("RSRQ", self.router.get("RSRQ", "")),
+            #     ("SINR", self.router.get("SINR", "")),
+            #     ("IP Address", self.router.get("IP", "")),
+            #     ("Gateway", self.router.get("Gateway", "")),
+            #     ("DNS", self.router.get("DNS", "")),
+            #     ("Connection", self.router.get("Connection", "")),
+            #     ("Uptime", self.router.get("Uptime", "")),
+            # ])
+            # yield self.router_card
 
         
     def on_mount(self) -> None:
 
         # Do not block startup
-        self.set_interval(5, self.refresh_fast_data)
+        self.set_interval(10, self.refresh_fast_data)
 
         self.set_interval(20, self.refresh_medium_data)
 
@@ -255,4 +288,19 @@ class DashboardPage(VerticalScroll):
             ("Name", self.hotspot["name"]),
             ])
         
-        
+        # self.router_card.update_rows([
+        #     ("SIM", self.router.get("SIM", "")),
+        #     ("Modem", self.router.get("Modem", "")),
+        #     ("Operator", self.router.get("Operator", "")),
+        #     ("Network", self.router.get("Network", "")),
+        #     ("CSQ", self.router.get("CSQ", "")),
+        #     ("RSRP", self.router.get("RSRP", "")),
+        #     ("RSRQ", self.router.get("RSRQ", "")),
+        #     ("SINR", self.router.get("SINR", "")),
+        #     ("IP Address", self.router.get("IP", "")),
+        #     ("Gateway", self.router.get("Gateway", "")),
+        #     ("DNS", self.router.get("DNS", "")),
+        #     ("Connection", self.router.get("Connection", "")),
+        #     ("Uptime", self.router.get("Uptime", "")),
+        # ])
+                
