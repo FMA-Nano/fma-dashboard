@@ -1,20 +1,21 @@
-import sqlite3
+"""Pump configuration service.
 
+Migrated to remote execution: app.db lives on the Nano, so reads/writes
+now go over SSH. get_pumps_config() returns a list of dicts (column name
+-> value), matching how the screen already indexes rows by key
+(pump["id"], etc) with sqlite3.Row locally.
+"""
 
-DB_PATH = "/home/pi/ST500V3/Main/app.db"
+from services.remote import query_remote_sqlite_dicts, execute_remote_sqlite
+from services.config import APP_DB_PATH
 
+DB_PATH = APP_DB_PATH
 
 
 def get_pumps_config():
 
-    conn = sqlite3.connect(DB_PATH)
-
-    conn.row_factory = sqlite3.Row
-
-    cursor = conn.cursor()
-
-
-    cursor.execute(
+    rows = query_remote_sqlite_dicts(
+        DB_PATH,
         """
         SELECT
             id,
@@ -23,20 +24,10 @@ def get_pumps_config():
             Downloaded
         FROM Pumps
         ORDER BY id
-        """
+        """,
     )
 
-
-    pumps = cursor.fetchall()
-
-
-    conn.close()
-
-
-    return pumps
-
-
-
+    return rows if rows is not None else []
 
 
 def update_pump_config(
@@ -46,17 +37,8 @@ def update_pump_config(
 ):
 
     try:
-
-        conn = sqlite3.connect(
+        return execute_remote_sqlite(
             DB_PATH,
-            timeout=10
-        )
-
-
-        cursor = conn.cursor()
-
-
-        cursor.execute(
             """
             UPDATE Pumps
             SET
@@ -65,26 +47,12 @@ def update_pump_config(
                 Downloaded = 0
             WHERE id = ?
             """,
-            (
+            [
                 hardware_id,
                 pulse_rate,
                 pump_id
-            )
+            ],
         )
-
-
-        conn.commit()
-
-
-        updated = cursor.rowcount
-
-
-        conn.close()
-
-
-        return updated > 0
-
-
 
     except Exception as e:
 

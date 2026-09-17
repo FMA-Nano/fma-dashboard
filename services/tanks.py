@@ -1,10 +1,13 @@
-import os
-import sqlite3
+"""Tank status service.
 
+Migrated to remote execution: app.db lives on the Nano, so it's now
+queried over SSH instead of opened directly with sqlite3 locally.
+"""
 
-DB_PATH = os.path.expanduser(
-    "~/ST500V3/Main/app.db"
-)
+from services.remote import query_remote_sqlite
+from services.config import APP_DB_PATH
+
+DB_PATH = APP_DB_PATH
 
 
 class Tank:
@@ -39,72 +42,63 @@ def get_tanks():
 
     tanks = []
 
-    try:
+    rows = query_remote_sqlite(
+        DB_PATH,
+        """
+        SELECT
+            id,
+            TankNo,
+            grade_id,
+            Capacity,
+            Level,
+            client_id,
+            Volume,
+            Ullage,
+            Temperature,
+            Water,
+            WebId,
+            DownLoaded,
+            SiteReconId,
+            ProbeId,
+            enabled
 
-        conn = sqlite3.connect(DB_PATH)
+        FROM Tanks
 
-        cursor = conn.cursor()
+        ORDER BY CAST(TankNo AS INTEGER)
+        """,
+    )
 
-        cursor.execute(
-            """
-            SELECT
-                id,
-                TankNo,
-                grade_id,
-                Capacity,
-                Level,
-                client_id,
-                Volume,
-                Ullage,
-                Temperature,
-                Water,
-                WebId,
-                DownLoaded,
-                SiteReconId,
-                ProbeId,
-                enabled
+    if rows is None:
+        print("Tank database error: could not reach Nano/query app.db")
+        return tanks
 
-            FROM Tanks
+    for row in rows:
 
-            ORDER BY TankNo
-            """
-        )
+        tank = Tank()
 
-        rows = cursor.fetchall()
+        tank.id = row[0]
+        tank.tank_number = row[1]
+        tank.grade_id = row[2]
 
-        conn.close()
+        tank.capacity = row[3]
+        tank.level = row[4]
 
-        for row in rows:
+        tank.client_id = row[5]
 
-            tank = Tank()
+        tank.volume = row[6]
+        tank.ullage = row[7]
 
-            tank.id = row[0]
-            tank.tank_number = row[1]
-            tank.grade_id = row[2]
+        tank.temperature = row[8]
+        tank.water = row[9]
 
-            tank.capacity = row[3]
-            tank.level = row[4]
+        tank.web_id = row[10]
+        tank.downloaded = bool(row[11])
 
-            tank.client_id = row[5]
+        tank.site_recon_id = row[12]
+        tank.probe_id = row[13]
 
-            tank.volume = row[6]
-            tank.ullage = row[7]
+        tank.enabled = bool(row[14])
 
-            tank.temperature = row[8]
-            tank.water = row[9]
-
-            tank.web_id = row[10]
-            tank.downloaded = bool(row[11])
-
-            tank.site_recon_id = row[12]
-            tank.probe_id = row[13]
-
-            tank.enabled = bool(row[14])
-
-            tanks.append(tank)
-
-    except Exception as e:
-
-        print(e)
+        tanks.append(tank)
 
     return tanks

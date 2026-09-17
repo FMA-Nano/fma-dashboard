@@ -17,7 +17,7 @@ class PumpsConfig(Vertical):
     def compose(self):
 
         yield Static(
-            f"[bold]Pump {self.pump['id']}[/bold]",
+            f"[bold]ID {self.pump['id']}[/bold]",
             classes="pump-title"
         )
 

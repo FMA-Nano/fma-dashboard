@@ -1,5 +1,14 @@
-import subprocess
+"""WireGuard status service.
+
+Migrated to remote execution: `wg`/`systemctl` describe the Nano's VPN
+state, so this now runs on the Nano over SSH. Note `sudo` is embedded in
+the remote command string (runs on the Nano), never as `sudo sshpass` on
+the laptop.
+"""
+
 import time
+
+from services.remote import run_remote
 
 
 class WireGuardStatus:
@@ -17,11 +26,11 @@ class WireGuardStatus:
 
 
 def get_wireguard(interface="wg1"):
-    result = subprocess.run(
-        ["sudo", "wg", "show", interface, "dump"],
-        capture_output=True,
-        text=True,
-    )
+    # sudo calls can be slower than plain commands - give some headroom.
+    result = run_remote(["sudo", "wg", "show", interface, "dump"], timeout=8)
+
+    if not result.ok and not result.stdout:
+        return None
 
     output = result.stdout
     lines = output.splitlines()
@@ -47,43 +56,33 @@ def get_wireguard(interface="wg1"):
     status.rx_bytes = int(peer_line[5])
     status.tx_bytes = int(peer_line[6])
     status.keepalive = peer_line[7]
-    
+
     status.enabled = get_wireguard_status(interface)
 
     return status
 
 
-import subprocess
-
-
 def get_wireguard_status(interface="wg1"):
 
-    # Check if wg command exists
-    check = subprocess.run(
-        ["which", "wg"],
-        capture_output=True,
-        text=True
-    )
+    # Check if wg command exists on the Nano
+    check = run_remote(["which", "wg"], timeout=5)
 
-    if check.returncode != 0:
+    if not check.ok:
+        if check.error_kind in ("offline", "timeout", "auth", "not_found"):
+            return check.status_word()
         return "Not Installed"
 
+    # Check interface (sudo call - give a bit more headroom than plain commands)
+    result = run_remote(["sudo", "wg", "show", interface], timeout=8)
 
-    # Check interface
-    result = subprocess.run(
-        ["sudo", "wg", "show", interface],
-        capture_output=True,
-        text=True
-    )
-
-
-    if result.returncode != 0:
+    if not result.ok:
+        if result.error_kind in ("offline", "timeout", "auth", "not_found"):
+            return result.status_word()
 
         if "No such device" in result.stderr:
             return "Disabled"
 
         return "Unknown"
-
 
     return "Connected"
 
@@ -113,27 +112,18 @@ def format_handshake(timestamp):
 
 
 def get_wireguard_service(interface="wg1") -> str:
-    try:
-        result = subprocess.run(
-            ["systemctl", "is-enabled", f"wg-quick@{interface}"],
-            capture_output=True,
-            text=True,
-            timeout=3,
-        )
+    result = run_remote(["systemctl", "is-enabled", f"wg-quick@{interface}"], timeout=3)
 
-        status = result.stdout.strip()
+    if not result.ok and result.error_kind in ("offline", "timeout", "auth", "not_found"):
+        return result.status_word()
 
-        if status == "enabled":
-            return "Enabled"
-        elif status == "disabled":
-            return "Disabled"
-        elif status == "not-found":
-            return "Not Installed"
-        else:
-            return "Unknown"
+    status = result.stdout.strip()
 
-    except FileNotFoundError:
+    if status == "enabled":
+        return "Enabled"
+    elif status == "disabled":
+        return "Disabled"
+    elif status == "not-found":
         return "Not Installed"
-
-    except Exception:
+    else:
         return "Unknown"

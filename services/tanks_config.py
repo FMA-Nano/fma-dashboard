@@ -1,16 +1,20 @@
-import sqlite3
+"""Tank configuration service.
 
-DB_PATH = "/home/pi/ST500V3/Main/app.db"
+Migrated to remote execution: app.db lives on the Nano, so reads/writes
+now go over SSH. get_tanks_config() returns a list of dicts, matching
+how the screen already indexes rows by key with sqlite3.Row locally.
+"""
+
+from services.remote import query_remote_sqlite_dicts, execute_remote_sqlite
+from services.config import APP_DB_PATH
+
+DB_PATH = APP_DB_PATH
 
 
 def get_tanks_config():
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-
-    cursor = conn.cursor()
-
-    cursor.execute(
+    rows = query_remote_sqlite_dicts(
+        DB_PATH,
         """
         SELECT
             id,
@@ -19,14 +23,10 @@ def get_tanks_config():
             Downloaded
         FROM Tanks
         ORDER BY TankNo
-        """
+        """,
     )
 
-    tanks = cursor.fetchall()
-
-    conn.close()
-
-    return tanks
+    return rows if rows is not None else []
 
 
 def update_tank_config(
@@ -35,15 +35,8 @@ def update_tank_config(
 ):
 
     try:
-
-        conn = sqlite3.connect(
+        return execute_remote_sqlite(
             DB_PATH,
-            timeout=10
-        )
-
-        cursor = conn.cursor()
-
-        cursor.execute(
             """
             UPDATE Tanks
             SET
@@ -51,19 +44,11 @@ def update_tank_config(
                 Downloaded = 0
             WHERE id = ?
             """,
-            (
+            [
                 probe_id,
                 tank_id
-            )
+            ],
         )
-
-        conn.commit()
-
-        updated = cursor.rowcount
-
-        conn.close()
-
-        return updated > 0
 
     except Exception as e:
 

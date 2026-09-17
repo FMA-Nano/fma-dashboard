@@ -1,108 +1,88 @@
-import subprocess
+"""Nano sshd status/history service.
+
+This reports on the *Nano's* SSH daemon (is it running, is it enabled,
+recent login history) - a different concern from services/remote.py,
+which is the transport WE use to reach the Nano in the first place.
+
+Migrated to remote execution: systemctl/journalctl now run on the Nano
+over SSH instead of on the laptop.
+"""
+
 import datetime
+
+from services.remote import run_remote
 
 
 def get_ssh_status():
 
-    try:
+    result = run_remote(["systemctl", "is-active", "ssh"], timeout=3)
 
-        result = subprocess.run(
-            [
-                "systemctl",
-                "is-active",
-                "ssh"
-            ],
-            capture_output=True,
-            text=True,
-            timeout=3
-        )
+    if not result.ok and result.error_kind in ("offline", "timeout", "auth", "not_found"):
+        return result.status_word()
 
-        status = result.stdout.strip()
+    status = result.stdout.strip()
 
-        if status == "active":
-            return "Enabled"
+    if status == "active":
+        return "Enabled"
+    elif status == "inactive":
+        return "Disabled"
+    elif status == "failed":
+        return "Failed"
+    elif status == "activating":
+        return "Starting"
+    elif status == "deactivating":
+        return "Stopping"
 
-        elif status == "inactive":
-            return "Disabled"
-
-        elif status == "failed":
-            return "Failed"
-
-        elif status == "activating":
-            return "Starting"
-
-        elif status == "deactivating":
-            return "Stopping"
-
-        elif status == "unknown":
-            return "Unknown"
-
-        return "Unknown"
-    
-    except Exception:
-
-        return "Unknown"
+    return "Unknown"
 
 
 def get_ssh_service():
 
-    try:
+    result = run_remote(["systemctl", "is-enabled", "ssh"], timeout=3)
 
-        result = subprocess.run(
-            [
-                "systemctl",
-                "is-enabled",
-                "ssh"
-            ],
-            capture_output=True,
-            text=True,
-            timeout=3
-        )
+    if not result.ok and result.error_kind in ("offline", "timeout", "auth", "not_found"):
+        return result.status_word()
 
-        status = result.stdout.strip()
+    status = result.stdout.strip()
 
-        if status == "enabled":
-            return "Enabled"
+    if status == "enabled":
+        return "Enabled"
+    elif status == "disabled":
+        return "Disabled"
 
-        elif status == "disabled":
-            return "Disabled"
+    return "Unknown"
 
-        return "Unknown"
 
-    except Exception:
-
-        return "Unknown"
-    
-    
 def get_ssh_history(limit=25):
 
+    cmd = (
+        "sudo journalctl -u ssh "
+        "| grep -E 'Accepted password|Failed password|Invalid user|Disconnected from|Connection closed|PAM.*authentication failures' "
+        "| tail -" + str(limit)
+    )
+
+    result = run_remote(cmd, timeout=8)
+
+    if not result.ok and result.error_kind in ("offline", "timeout", "auth", "not_found"):
+        return [
+            {
+                "date": "-",
+                "time": "-",
+                "event": "ERROR",
+                "description": result.status_word(),
+            }
+        ]
+
     try:
-
-        cmd = (
-            "sudo journalctl -u ssh "
-            "| grep -E 'Accepted password|Failed password|Invalid user|Disconnected from|Connection closed|PAM.*authentication failures' "
-            "| tail -" + str(limit)
-        )
-
-
-        result = subprocess.check_output(
-            cmd,
-            shell=True,
-            text=True
-        )
-
 
         logs = []
 
-
-        for line in result.splitlines():
+        for line in result.stdout.splitlines():
 
             parts = line.split()
 
-
             if len(parts) < 6:
                 continue
-
 
             # -------------------------
             # Date and time
@@ -110,8 +90,7 @@ def get_ssh_history(limit=25):
 
             month = parts[0]
             day = parts[1]
-            time = parts[2]
-
+            time_str = parts[2]
 
             try:
 
@@ -124,11 +103,9 @@ def get_ssh_history(limit=25):
                     "%d %b %Y"
                 )
 
-            except:
+            except Exception:
 
                 date = f"{day} {month}"
-
-
 
             # -------------------------
             # Remove:
@@ -137,8 +114,6 @@ def get_ssh_history(limit=25):
             # -------------------------
 
             description = " ".join(parts[5:])
-
-
 
             # -------------------------
             # Determine event
@@ -162,11 +137,9 @@ def get_ssh_history(limit=25):
 
             elif "PAM" in description and "authentication failures" in description:
                 event = "CRITICAL"
-                
+
             else:
                 event = "UNKNOWN"
-
-
 
             # -------------------------
             # Store
@@ -175,19 +148,15 @@ def get_ssh_history(limit=25):
             logs.append(
                 {
                     "date": date,
-                    "time": time,
+                    "time": time_str,
                     "event": event,
                     "description": description
                 }
             )
 
-
-
         # newest first
 
         return logs[::-1]
-
-
 
     except Exception as e:
 

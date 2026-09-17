@@ -1,281 +1,314 @@
-from textual.containers import VerticalScroll, Horizontal
-from textual.widgets import Static, Button, Label
-from textual.binding import Binding
+from textual.containers import Container, VerticalScroll, Horizontal, Vertical
+from textual.widgets import Static, Button, Label, Input
+from textual import work
 
-from services import settings as settings_service
+from services import config as nano_config
+from services.remote import warm_connection, close_connection
 
 
-class SettingsPage(VerticalScroll):
+class SettingsPage(Container):
+    """View/edit the active Nano connection, and manage a list of saved
+    sites for quick switching between multiple field sites.
 
-    BINDINGS = [
-        Binding("up", "previous_row", "Up"),
-        Binding("down", "next_row", "Down"),
-        Binding("left", "previous_value", "Left"),
-        Binding("right", "next_value", "Right"),
-        Binding("enter", "select", "Select"),
-        Binding("space", "select", "Select"),
-    ]
+    Laid out as two side-by-side columns, each independently scrollable:
+    Nano Connection on the left, Saved Sites on the right. Keeping them
+    separate means a long sites list never overlaps or pushes around the
+    connection form/Connect button.
 
+    This is the same connection info gathered on the login gate shown
+    before the main UI - this page exists so it can be changed later
+    (e.g. switching to a different site) without restarting the app.
+    """
 
     def compose(self):
 
         yield Static(
-            "[bold]Settings[/bold]",
+            "[bold]Login Settings[/bold]",
             classes="page-title"
         )
 
+        with Horizontal(id="settings_columns"):
 
-        # -----------------------------
-        # Refresh Rate
-        # -----------------------------
+            with VerticalScroll(id="connection_column", classes="settings-column"):
 
-        yield Label(
-            "Refresh Rate",
-            classes="section-title"
+                yield Label(
+                    "Nano Connection",
+                    classes="section-title"
+                )
+
+                current = nano_config.get_nano()
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("Host")
+                    yield Input(
+                        value=current["host"],
+                        placeholder="e.g. remote.fmafrica.com or 172.16.70.3",
+                        id="nano_host",
+                        classes="settings-control",
+                    )
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("Port")
+                    yield Input(
+                        value=str(current.get("port", 22)),
+                        placeholder="22",
+                        id="nano_port",
+                        classes="settings-control",
+                    )
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("User")
+                    yield Input(
+                        value=current["user"],
+                        placeholder="pi",
+                        id="nano_user",
+                        classes="settings-control",
+                    )
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("Password")
+                    yield Input(
+                        value=current["password"],
+                        password=True,
+                        id="nano_password",
+                        classes="settings-control",
+                    )
+
+                self.connection_status = Static(
+                    f"Active: {current['user']}@{current['host']}:{current.get('port', 22)}",
+                    classes="setting-status",
+                )
+                yield self.connection_status
+
+                with Horizontal(classes="setting-actions"):
+                    yield Button("Connect", id="connect_nano")
+
+            with VerticalScroll(id="sites_column", classes="settings-column"):
+
+                yield Label(
+                    "Saved Sites",
+                    classes="section-title"
+                )
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("Site Name")
+                    yield Input(
+                        placeholder="e.g. Site A",
+                        id="site_name",
+                        classes="settings-control",
+                    )
+                    yield Button("Save Current as Site", id="save_site")
+
+
+                with Horizontal(classes="setting-inline-row"):
+                    yield Label("Site Search")
+                    yield Input(
+                        placeholder="Search sites...",
+                        id="site_search",
+                        classes="settings-control",
+                    )
+
+
+                self.sites_container = Vertical(id="sites_list")
+                yield self.sites_container
+
+    def on_mount(self) -> None:
+        self._render_sites()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "site_search":
+            self._render_sites(event.value)
+
+    # --------------------------------
+    # Nano connection
+    # --------------------------------
+
+    def force_refresh(self) -> None:
+        """Re-populate the form fields and status line from the current
+        connection info - used after a Disconnect/reconnect elsewhere in
+        the app, so this page doesn't keep showing a stale previous
+        connection if the user visits it afterwards.
+        """
+        current = nano_config.get_nano()
+        self.query_one("#nano_host", Input).value = current["host"]
+        self.query_one("#nano_port", Input).value = str(current.get("port", 22))
+        self.query_one("#nano_user", Input).value = current["user"]
+        self.query_one("#nano_password", Input).value = current["password"]
+        self.connection_status.update(
+            f"Active: {current['user']}@{current['host']}:{current.get('port', 22)}"
         )
 
+    def on_button_pressed(self, event):
 
-        with Horizontal(id="refresh_buttons"):
+        if event.button.id == "connect_nano":
+            self.connect_to_nano()
 
-            yield Button(
-                "5s",
-                id="refresh_5",
-                classes="setting-button"
+        elif event.button.id == "save_site":
+            self.save_current_as_site()
+
+        elif event.button.id and event.button.id.startswith("use_site_"):
+            index = int(event.button.id[len("use_site_"):])
+            self.use_site(self._site_names[index])
+
+        elif event.button.id and event.button.id.startswith("delete_site_"):
+            index = int(event.button.id[len("delete_site_"):])
+            self.delete_site(self._site_names[index])
+
+    def connect_to_nano(self):
+
+        host = self.query_one("#nano_host", Input).value.strip()
+        port_text = self.query_one("#nano_port", Input).value.strip()
+        user = self.query_one("#nano_user", Input).value.strip() or "pi"
+        password = self.query_one("#nano_password", Input).value
+
+        if not host:
+            self.notify("Host is required", severity="error")
+            return
+
+        if not password:
+            self.notify("Password is required", severity="error")
+            return
+
+        if port_text and not port_text.isdigit():
+            self.notify("Port must be a number", severity="error")
+            return
+
+        port = int(port_text) if port_text else 22
+
+        self.connection_status.update(f"Connecting to {user}@{host}:{port}...")
+        self._connect_worker(host, port, user, password)
+
+    @work(thread=True, exclusive=True, group="settings-connect")
+    def _connect_worker(self, host, port, user, password):
+
+        # Close the previous connection's multiplexed socket first (best
+        # effort - if it fails, the old socket just sits idle until its
+        # own ControlPersist timeout, harmless either way).
+        try:
+            close_connection()
+        except Exception:
+            pass
+
+        nano_config.set_nano(host=host, port=port, user=user, password=password)
+
+        result = warm_connection(timeout=10)
+
+        if result.ok:
+            nano_config.save_nano()
+
+        self.app.call_from_thread(self._apply_connect_result, host, port, user, result)
+
+    def _apply_connect_result(self, host, port, user, result):
+
+        if result.ok:
+            self.connection_status.update(
+                f"[#5FD68A]Connected[/#5FD68A]: {user}@{host}:{port} (saved)"
             )
-
-            yield Button(
-                "10s",
-                id="refresh_10",
-                classes="setting-button"
-            )
-
-            yield Button(
-                "30s",
-                id="refresh_30",
-                classes="setting-button"
-            )
-
-
-        # -----------------------------
-        # Keyboard Help
-        # -----------------------------
-
-        yield Static(
-            "[bold]Keyboard Shortcuts[/bold]",
-            classes="section-title"
-        )
-
-
-        yield Static(
-            "↑ ↓      Navigate\n"
-            "← →      Change Value\n"
-            "SPACE    Select\n"
-            "ENTER    Select\n"
-            "ESC      Back\n"
-            "Q        Quit",
-            classes="info-block",
-        )
-
-
-
-    def on_mount(self):
-
-        # Menu rows
-
-        self.rows = [
-            "refresh"
-        ]
-
-
-        self.current_row = 0
-
-
-        # Buttons
-
-        self.refresh_values = [
-            "refresh_5",
-            "refresh_10",
-            "refresh_30",
-        ]
-
-
-        # Get saved setting
-
-        current = settings_service.get_refresh_interval()
-
-
-        if current == 5:
-            self.refresh_index = 0
-
-        elif current == 10:
-            self.refresh_index = 1
-
-        elif current == 30:
-            self.refresh_index = 2
-
+            self.notify(f"Connected to {user}@{host}:{port}", severity="information")
         else:
-            self.refresh_index = 0
-
-
-
-        # Cursor starts on saved value
-
-        self.cursor_index = self.refresh_index
-
-
-        self.update_menu()
-
+            self.connection_status.update(
+                f"[#E05C5C]Failed[/#E05C5C]: {user}@{host}:{port} - {result.status_word()}"
+            )
+            self.notify(
+                f"Could not connect: {result.status_word()}",
+                severity="error",
+            )
 
 
     # --------------------------------
-    # Move between settings
+    # Saved sites
     # --------------------------------
 
-    def action_next_row(self):
+    def _render_sites(self, filter_text=""):
 
-        if self.current_row < len(self.rows) - 1:
-            self.current_row += 1
+        for child in list(self.sites_container.children):
+            child.remove()
 
-        self.update_menu()
+        sites = nano_config.list_sites_by_recency()
 
+        filter_text = (filter_text or "").strip().lower()
 
-
-    def action_previous_row(self):
-
-        if self.current_row > 0:
-            self.current_row -= 1
-
-        self.update_menu()
-
-
-
-    # --------------------------------
-    # Move cursor
-    # --------------------------------
-
-    def action_next_value(self):
-
-        if self.current_row == 0:
-
-            if self.cursor_index < len(self.refresh_values) - 1:
-                self.cursor_index += 1
-
-
-        self.update_menu()
-
-
-
-    def action_previous_value(self):
-
-        if self.current_row == 0:
-
-            if self.cursor_index > 0:
-                self.cursor_index -= 1
-
-
-        self.update_menu()
-
-
-
-    # --------------------------------
-    # Save value
-    # --------------------------------
-
-    def action_select(self):
-
-        if self.current_row == 0:
-
-            values = [
-                5,
-                10,
-                30
+        if filter_text:
+            sites = [
+                s for s in sites
+                if filter_text in s.get("name", "").lower()
+                or filter_text in s.get("host", "").lower()
             ]
 
+        self._site_names = [site["name"] for site in sites]
 
-            selected = values[self.cursor_index]
-
-
-            # Save setting
-
-            settings_service.set_refresh_interval(
-                selected
+        if not sites:
+            message = "No sites match your search." if filter_text else "No saved sites yet."
+            self.sites_container.mount(
+                Static(message, classes="info-block")
             )
+            return
 
+        for index, site in enumerate(sites):
 
-            # Update blue selected
+            row = Horizontal(classes="setting-inline-row")
+            self.sites_container.mount(row)
 
-            self.refresh_index = self.cursor_index
+            row.mount(Label(f"{site['name']}  ({site['user']}@{site['host']}:{site.get('port', 22)})"))
+            row.mount(Button("Use", id=f"use_site_{index}"))
+            row.mount(Button("Delete", id=f"delete_site_{index}"))
 
+        # Guarantee the newest entry (rendered first, at the top) is
+        # immediately visible without any scrolling - explicit rather
+        # than relying on whatever scroll position Textual leaves things
+        # at after mounting a batch of new widgets.
+        self.query_one("#sites_column").scroll_home(animate=False)
 
-            print(
-                "Refresh rate changed:",
-                selected
-            )
+    def save_current_as_site(self):
 
+        name = self.query_one("#site_name", Input).value.strip()
+        host = self.query_one("#nano_host", Input).value.strip()
+        port_text = self.query_one("#nano_port", Input).value.strip()
+        user = self.query_one("#nano_user", Input).value.strip() or "pi"
+        password = self.query_one("#nano_password", Input).value
 
-        self.update_menu()
+        if not name:
+            self.notify("Site name is required", severity="error")
+            return
 
+        if not host:
+            self.notify("Host is required", severity="error")
+            return
 
+        if port_text and not port_text.isdigit():
+            self.notify("Port must be a number", severity="error")
+            return
 
-    # --------------------------------
-    # Update colours
-    # --------------------------------
+        port = int(port_text) if port_text else 22
 
-    def update_menu(self):
+        if nano_config.save_site(name, host, port, user, password):
+            self.notify(f"Saved site '{name}'", severity="information")
+            self.query_one("#site_name", Input).value = ""
+            self.query_one("#site_search", Input).value = ""
+            self._render_sites()
+        else:
+            self.notify("Could not save site", severity="error")
 
-        buttons = [
-            "refresh_5",
-            "refresh_10",
-            "refresh_30",
-        ]
+    def use_site(self, name):
 
+        site = nano_config.get_site(name)
 
-        # Clear colours
+        if not site:
+            self.notify(f"Site '{name}' not found", severity="error")
+            return
 
-        for button_id in buttons:
+        self.query_one("#nano_host", Input).value = site["host"]
+        self.query_one("#nano_port", Input).value = str(site.get("port", 22))
+        self.query_one("#nano_user", Input).value = site["user"]
+        self.query_one("#nano_password", Input).value = site["password"]
 
-            button = self.query_one(
-                "#" + button_id
-            )
+        self.notify(f"Loaded '{name}' - click Connect to switch", severity="information")
 
-            button.remove_class(
-                "active-value"
-            )
+    def delete_site(self, name):
 
-            button.remove_class(
-                "cursor-value"
-            )
-
-
-
-        # -------------------------
-        # Blue = saved setting
-        # -------------------------
-
-        active = self.refresh_values[
-            self.refresh_index
-        ]
-
-
-        self.query_one(
-            "#" + active
-        ).add_class(
-            "active-value"
-        )
-
-
-
-        # -------------------------
-        # Green = cursor position
-        # -------------------------
-
-        cursor = self.refresh_values[
-            self.cursor_index
-        ]
-
-
-        self.query_one(
-            "#" + cursor
-        ).add_class(
-            "cursor-value"
-        )
+        if nano_config.delete_site(name):
+            self.notify(f"Deleted site '{name}'", severity="information")
+            current_filter = self.query_one("#site_search", Input).value
+            self._render_sites(current_filter)
+        else:
+            self.notify("Could not delete site", severity="error")

@@ -1,10 +1,14 @@
-import sqlite3
-import os
+"""Pump status service.
 
+Migrated to remote execution: app.db lives on the Nano
+(/home/pi/ST500V3/Main/app.db), so it's now queried over SSH instead of
+opened directly with sqlite3 on the local machine.
+"""
 
-DB_PATH = os.path.expanduser(
-    "~/ST500V3/Main/app.db"
-)
+from services.remote import query_remote_sqlite
+from services.config import APP_DB_PATH
+
+DB_PATH = APP_DB_PATH
 
 
 PUMP_STATUS = {
@@ -34,21 +38,18 @@ PUMP_STATUS = {
 }
 
 
-
 def get_status_text(status):
 
     try:
         status = int(status)
 
-    except:
+    except Exception:
         return "Unknown"
-
 
     return PUMP_STATUS.get(
         status,
         "Unknown"
     )
-
 
 
 class Pump:
@@ -68,82 +69,60 @@ class Pump:
         self.linked_tank = ""
 
 
-
 def get_pumps():
 
     pumps = []
 
+    rows = query_remote_sqlite(
+        DB_PATH,
+        """
+        SELECT
+            id,
+            Status,
+            PulsRate,
+            PulseTimeout,
+            Authorized,
+            HardwareId,
+            tank_id
 
-    try:
+        FROM Pumps
 
-        conn = sqlite3.connect(
-            DB_PATH
+        WHERE HardwareId IS NOT NULL
+          AND HardwareId != 0
+          AND HardwareId != ''
+
+        ORDER BY CAST(HardwareId AS INTEGER)
+        """,
+    )
+
+    if rows is None:
+        print("Pump database error: could not reach Nano/query app.db")
+        return pumps
+
+    for row in rows:
+
+        pump = Pump()
+
+        pump.id = row[0]
+
+        pump.status = row[1]
+
+        pump.status_text = get_status_text(
+            row[1]
         )
 
-        cursor = conn.cursor()
+        pump.pulse_rate = row[2]
 
+        pump.pulse_timeout = row[3]
 
-        cursor.execute(
-            """
-            SELECT
-                id,
-                Status,
-                PulsRate,
-                PulseTimeout,
-                Authorized,
-                HardwareId,
-                tank_id
+        pump.auto_authorize = row[4]
 
-            FROM Pumps
+        pump.hardware_id = row[5]
 
-            ORDER BY id
-            """
+        pump.linked_tank = row[6]
+
+        pumps.append(
+            pump
         )
-
-
-        rows = cursor.fetchall()
-
-
-        for row in rows:
-
-
-            pump = Pump()
-
-
-            pump.id = row[0]
-
-            pump.status = row[1]
-
-            pump.status_text = get_status_text(
-                row[1]
-            )
-
-
-            pump.pulse_rate = row[2]
-
-            pump.pulse_timeout = row[3]
-
-            pump.auto_authorize = row[4]
-
-            pump.hardware_id = row[5]
-
-            pump.linked_tank = row[6]
-
-
-            pumps.append(
-                pump
-            )
-
-
-        conn.close()
-
-
-    except Exception as e:
-
-        print(
-            "Pump database error:",
-            e
-        )
-
 
     return pumps

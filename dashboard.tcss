@@ -8,7 +8,76 @@ Screen {
     padding: 0 2;
     background: #10131a;
     border-bottom: heavy #2b3542;
+    align: left middle;
+}
+
+#app-header-logo {
+    width: 1fr;
     content-align: left middle;
+}
+
+#nano-disconnect-banner {
+    width: auto;
+    color: #E05C5C;
+    text-style: bold;
+    content-align: center middle;
+    margin: 0 2;
+    display: none;
+}
+
+#header-actions {
+    dock: right;
+    margin-top: 1;
+    width: auto;
+    height: auto;
+}
+
+.header-group {
+    width: auto;
+    height: auto;
+    align: right top;
+    margin-bottom: 1;
+}
+
+.header-group-label {
+    width: auto;
+    color: #9aa5b1;
+}
+
+.header-actions-row {
+    width: auto;
+    height: auto;
+    align: right middle;
+}
+
+.header-actions-row Button {
+    margin-left: 1;
+    min-width: 12;
+}
+
+#refresh_button {
+    background: #3a7a4a;
+    color: white;
+}
+
+#disconnect_button {
+    background: #2f6fa3;
+    color: white;
+}
+
+#reboot_nano_button {
+    background: #b0793a;
+    color: white;
+}
+
+#restart_software_button {
+    background: #3a7a4a;
+    color: white;
+}
+
+#stop_all_software_button {
+    background: #b03a3a;
+    color: white;
 }
 
 #body {
@@ -193,6 +262,46 @@ DashboardPage {
     width: 30;
 }
 
+.section-divider {
+    width: 100%;
+    height: 1;
+    border-bottom: solid #2b3542;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+SettingsPage {
+    height: 1fr;
+}
+
+RouterSettingsPage {
+    height: 1fr;
+}
+
+#router_settings_actions_row {
+    height: auto;
+    overflow-x: auto;
+}
+
+#settings_columns {
+    height: 1fr;
+}
+
+.settings-column {
+    width: 1fr;
+    height: 1fr;
+    padding: 0 2;
+    border-right: solid #2b3542;
+}
+
+#sites_column {
+    border-right: none;
+}
+
+#sites_list {
+    height: 20;
+}
+
 .setting-button {
 
     width: 10;
@@ -285,6 +394,7 @@ Button {
     background: #2f6fa3;
     color: #ffffff;
     border: none;
+    height: 1;
 }
 
 Button:hover {
@@ -294,4 +404,19 @@ Button:hover {
 Footer {
     background: #10131a;
     color: #b7c0cc;
+}
+
+.log-nav-button {
+    width: auto;
+    min-width: 16;
+    margin: 0 1 1 0;
+}
+
+.log-folder-row {
+    height: auto;
+    margin-bottom: 1;
+}
+
+LogFilesPage {
+    height: 1fr;
 }
